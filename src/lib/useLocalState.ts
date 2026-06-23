@@ -13,10 +13,7 @@ export function useLocalState<T>(
   const [value, setValue] = useState<T>(initial);
 
   useEffect(() => {
-    let cancelled = false;
-
-    queueMicrotask(() => {
-      if (cancelled) return;
+    const timer = window.setTimeout(() => {
       try {
         const raw = window.localStorage.getItem(key);
         if (raw !== null) {
@@ -25,10 +22,10 @@ export function useLocalState<T>(
       } catch {
         setValue(initial);
       }
-    });
+    }, 0);
 
     return () => {
-      cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [initial, key]);
 
