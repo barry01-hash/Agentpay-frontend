@@ -7,12 +7,6 @@ import { TimeAgo } from "@/components/TimeAgo";
 import { apiGet } from "@/lib/apiClient";
 import { safeFormatTimestamp, safeStringify } from "@/lib/format";
 import { useDebounce } from "@/lib/useDebounce";
-import { Spinner } from "@/components/Spinner";
-import {
-  safeFormatTimestamp,
-  safeStringify,
-} from "@/lib/format";
-import { useApi } from "@/lib/useApi";
 
 type AppEvent = {
   id: string;
@@ -48,12 +42,12 @@ function parseEventsResponse(body: EventsResponse): AppEvent[] {
       throw new Error("Malformed events payload");
     }
 
-    const type = typeof item.type === "string" ? item.type : String(item.type ?? "");
-    const id = typeof item.id === "string" ? item.id : String(item.id ?? index);
-    const ts = item.ts as AppEvent["ts"];
-    const payload = "payload" in item ? item.payload : undefined;
-
-    return { id, ts, type, payload };
+    return {
+      id: typeof item.id === "string" ? item.id : String(item.id ?? index),
+      ts: item.ts as AppEvent["ts"],
+      type: typeof item.type === "string" ? item.type : String(item.type ?? ""),
+      payload: "payload" in item ? item.payload : undefined,
+    };
   });
 }
 
@@ -103,8 +97,9 @@ export default function EventsPage() {
           setItems([]);
         })
         .finally(() => {
-          if (cancelled || background) return;
-          setLoading(false);
+          if (!cancelled && !background) {
+            setLoading(false);
+          }
         });
     };
 
@@ -131,8 +126,6 @@ export default function EventsPage() {
   const emptyDescription = hasFilter
     ? "Try a different event type or clear the filter."
     : "Incoming events will appear here once the backend records them.";
-  const state = useApi<{ items: AppEvent[] }>("/api/v1/events?limit=100");
-  const items = state.status === "ok" ? state.data.items : null;
 
   return (
     <main
@@ -172,11 +165,8 @@ export default function EventsPage() {
       </div>
 
       {error && (
-      <h1 className="text-3xl font-semibold tracking-tight">Event log</h1>
-      {state.status === "loading" && <Spinner label="Loading events" />}
-      {state.status === "error" && (
         <p role="alert" className="text-sm text-rose-600">
-          {state.error}
+          {error}
         </p>
       )}
 
@@ -198,8 +188,6 @@ export default function EventsPage() {
             ) : null
           }
         />
-      {items && items.length === 0 && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">No events yet.</p>
       )}
 
       {!loading && !error && visibleItems && visibleItems.length > 0 && (

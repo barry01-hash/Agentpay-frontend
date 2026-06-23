@@ -15,17 +15,6 @@ export type ApiError = {
   requestId?: string;
 };
 
-async function readResponseBody(res: Response): Promise<unknown | undefined> {
-  const responseBody: unknown = (res as Response & { body?: unknown }).body;
-  if (typeof responseBody === "string") {
-    if (responseBody.trim().length === 0) return undefined;
-    return JSON.parse(responseBody);
-  }
-
-  const parsed = await res.json();
-  return parsed === null ? undefined : parsed;
-}
-
 export type ApiFetchInit = RequestInit & {
   /** Request timeout in milliseconds. Pass 0 or a negative value to disable. */
   timeoutMs?: number;

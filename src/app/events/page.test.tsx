@@ -9,6 +9,7 @@ type EventRow = {
 };
 
 const BASE_TIME = new Date("2026-06-23T12:00:00.000Z");
+
 const FIRST_BATCH: EventRow[] = [
   {
     id: "evt-1",
@@ -29,6 +30,7 @@ const FIRST_BATCH: EventRow[] = [
     payload: { agent: "A1" },
   },
 ];
+
 const REFRESH_BATCH: EventRow[] = [
   {
     id: "evt-4",
@@ -63,7 +65,7 @@ describe("EventsPage", () => {
     jest.restoreAllMocks();
   });
 
-  it("renders event timestamps, filters by type, and shows an empty state when nothing matches", async () => {
+  it("renders events, filters by type, and shows an empty state when nothing matches", async () => {
     const fetchMock = jest.fn(async (url: RequestInfo | URL) => {
       expect(String(url)).toContain("/api/v1/events?limit=100");
       return jsonResponse({ items: FIRST_BATCH });
@@ -81,7 +83,9 @@ describe("EventsPage", () => {
     expect(container.querySelectorAll("time")).toHaveLength(6);
     expect(screen.getByText("1m ago")).toBeInTheDocument();
 
-    const filter = screen.getByRole("searchbox", { name: /filter events by type/i });
+    const filter = screen.getByRole("searchbox", {
+      name: /filter events by type/i,
+    });
     fireEvent.change(filter, { target: { value: "payment.failed" } });
 
     await act(async () => {
@@ -106,7 +110,9 @@ describe("EventsPage", () => {
       expect(
         screen.getByText(/No events match "does-not-exist"\./i)
       ).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /clear filter/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /clear filter/i })
+      ).toBeInTheDocument();
     });
   });
 
@@ -190,65 +196,9 @@ describe("EventsPage", () => {
     render(<EventsPage />);
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(/malformed events payload/i);
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        /malformed events payload/i
+      );
     });
-import { render, screen } from "@testing-library/react";
-import EventsPage from "./page";
-import { apiGet } from "@/lib/apiClient";
-
-jest.mock("@/lib/apiClient", () => ({
-  apiGet: jest.fn(),
-}));
-
-const mockApiGet = apiGet as jest.MockedFunction<typeof apiGet>;
-
-describe("EventsPage", () => {
-  beforeEach(() => {
-    mockApiGet.mockReset();
-  });
-
-  it("renders the shared loading status while fetching", () => {
-    mockApiGet.mockReturnValue(new Promise(() => {}));
-
-    render(<EventsPage />);
-
-    expect(mockApiGet).toHaveBeenCalledWith("/api/v1/events?limit=100");
-    expect(screen.getByRole("status")).toHaveTextContent("Loading events");
-  });
-
-  it("renders events on success", async () => {
-    mockApiGet.mockResolvedValue({
-      items: [
-        {
-          id: "evt_1",
-          ts: 1_700_000_000,
-          type: "usage.recorded",
-          payload: { serviceId: "svc_1" },
-        },
-      ],
-    });
-
-    render(<EventsPage />);
-
-    expect(await screen.findByText("usage.recorded")).toBeInTheDocument();
-    expect(screen.getByText(/svc_1/)).toBeInTheDocument();
-  });
-
-  it("renders an empty state when the API returns no events", async () => {
-    mockApiGet.mockResolvedValue({ items: [] });
-
-    render(<EventsPage />);
-
-    expect(await screen.findByText("No events yet.")).toBeInTheDocument();
-  });
-
-  it("renders API errors as alerts", async () => {
-    mockApiGet.mockRejectedValue(new Error("failed to load events"));
-
-    render(<EventsPage />);
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "failed to load events",
-    );
   });
 });

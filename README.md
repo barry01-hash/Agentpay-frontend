@@ -104,6 +104,31 @@ Because the variable is `NEXT_PUBLIC_*`, its value is exposed to the browser. Ne
 
 A baseline security header set (CSP, `X-Frame-Options: DENY`, `Referrer-Policy`, `X-Content-Type-Options`, `Permissions-Policy`, HSTS) is wired up in `next.config.ts` via `src/lib/securityHeaders.ts`. The CSP `connect-src` directive tracks `NEXT_PUBLIC_AGENTPAY_API_BASE` automatically; `<a href>` links to external sites (`https://stellar.org`, etc.) remain navigable.
 
+## Route map (frontend)
+
+| Path | Notes |
+|------|-------|
+| `/` | Home |
+| `/about` | About |
+| `/admin` | Admin |
+| `/agents` | Agents |
+| `/agents/:agent` | Agent detail |
+| `/api-keys` | API keys |
+| `/changelog` | Changelog |
+| `/docs` | Docs |
+| `/events` | Event log |
+| `/export` | Export |
+| `/search` | Search |
+| `/services` | Services |
+| `/services/:serviceId` | Service detail |
+| `/services/:serviceId/agents` | Service agents |
+| `/services/:serviceId/edit` | Edit service |
+| `/services/new` | New service |
+| `/settings` | Settings |
+| `/stats` | Stats |
+| `/usage` | Usage |
+| `/webhooks` | Webhooks |
+
 ## Event log rendering
 
 The `/events` page renders server-supplied JSON payloads. Each payload is serialised through `safeStringify` (`src/lib/format.ts`) with a hard cap (`EVENT_PAYLOAD_MAX_CHARS`, default 5,000 chars) and a visible `…(truncated)` marker. Circular references, `BigInt`, functions, and malformed timestamps are replaced with safe sentinels so a bad payload can't crash the page.

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { useEffect } from "react";
 import { ToastProvider, useToast } from "../ToastProvider";
 
 // --------------- test helpers ---------------
@@ -287,11 +288,13 @@ describe("ToastProvider", () => {
   // ------------------------------------------------------------------
   describe("context value", () => {
     it("exposes a stable push function across re-renders", () => {
-      const ref: { current: ((m: string) => void) | null } = { current: null };
+      const capture = jest.fn();
 
       function Spy() {
         const { push } = useToast();
-        ref.current = push;
+        useEffect(() => {
+          capture(push);
+        }, [push]);
         return null;
       }
 
@@ -301,13 +304,15 @@ describe("ToastProvider", () => {
         </ToastProvider>,
       );
 
-      const firstPush = ref.current;
+      expect(capture).toHaveBeenCalledTimes(1);
+      const firstPush = capture.mock.calls[0][0];
       rerender(
         <ToastProvider>
           <Spy />
         </ToastProvider>,
       );
-      expect(ref.current).toBe(firstPush);
+      expect(capture).toHaveBeenCalledTimes(1);
+      expect(capture.mock.calls[0][0]).toBe(firstPush);
     });
   });
 });
